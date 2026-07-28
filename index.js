@@ -14,6 +14,8 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
+const IS_FROM_RENDER = process.env.IS_FROM_RENDER === "TRUE";
+
 const DEFAULT_SPREADSHEET_ID = process.env.DEFAULT_SPREADSHEET_ID;
 const MASTER_RANGE = process.env.MASTER_RANGE;
 const IZIN_RANGE = process.env.IZIN_RANGE;
@@ -22,12 +24,17 @@ const DEFAULT_INPUT_FILE = path.resolve(
   "data/PKM Rasanae Timur.xlsx",
 );
 const OUTPUT_DIR = path.resolve(__dirname, "output");
-const DEFAULT_KEYFILE = path.resolve(__dirname, "google.json");
+let DEFAULT_KEYFILE;
+if (IS_FROM_RENDER) {
+  DEFAULT_KEYFILE = "/etc/secrets/google.json";
+} else {
+  DEFAULT_KEYFILE = path.resolve(__dirname, "google.json");
+}
 const PORT = process.env.PORT || 3000;
 const upload = multer({ storage: multer.memoryStorage() });
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: DEFAULT_KEYFILE ?? "/etc/secrets/google.json",
+  keyFile: DEFAULT_KEYFILE,
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
