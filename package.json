@@ -1,0 +1,23 @@
+{
+  "name": "presence-calculation",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "serve": "node index.js",
+    "calculate": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "Presence calculation service with REST API endpoints.",
+  "dependencies": {
+    "date-holidays": "^3.28.0",
+    "dotenv": "^16.6.1",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "googleapis": "^171.4.0",
+    "moment": "^2.30.1",
+    "multer": "^1.4.5-lts.1"
+  }
+}
