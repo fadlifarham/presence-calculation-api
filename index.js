@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 3000;
 const upload = multer({ storage: multer.memoryStorage() });
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: DEFAULT_KEYFILE,
+  keyFile: DEFAULT_KEYFILE ?? "/etc/secrets/google.json",
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
