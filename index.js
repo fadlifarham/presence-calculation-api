@@ -384,8 +384,6 @@ app.use(
 );
 app.use(express.json());
 
-app.options("*", cors({ origin: CORS_ORIGIN, credentials: CORS_CREDENTIALS }));
-
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
