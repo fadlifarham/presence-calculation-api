@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import multer from "multer";
 import ExcelJS from "exceljs";
 import moment from "moment";
@@ -31,6 +32,8 @@ if (IS_FROM_RENDER) {
   DEFAULT_KEYFILE = path.resolve(__dirname, "google.json");
 }
 const PORT = process.env.PORT || 3000;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
+const CORS_CREDENTIALS = process.env.CORS_CREDENTIALS === "true";
 const upload = multer({ storage: multer.memoryStorage() });
 
 const auth = new google.auth.GoogleAuth({
@@ -371,7 +374,17 @@ const calculatePresence = async ({
 };
 
 const app = express();
+app.use(
+  cors({
+    origin: CORS_ORIGIN,
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: CORS_CREDENTIALS,
+  }),
+);
 app.use(express.json());
+
+app.options("*", cors({ origin: CORS_ORIGIN, credentials: CORS_CREDENTIALS }));
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
