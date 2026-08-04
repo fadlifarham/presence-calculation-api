@@ -92,6 +92,21 @@ const buildWorksheetColumns = () => {
 
 const buildPresenceWorkbook = (data) => {
   const currentDate = new Date();
+  const indonesianMonths = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+  const formattedCurrentDate = `${currentDate.getDate()} ${indonesianMonths[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Sheet 1");
 
@@ -142,7 +157,7 @@ const buildPresenceWorkbook = (data) => {
   worksheet.addRow({});
   const keteranganDanLokasiRow = worksheet.addRow({
     no: "Keterangan",
-    cutiTahunan: `Kota Bima, ${currentDate.toLocaleDateString()}`,
+    cutiTahunan: `Kota Bima, ${formattedCurrentDate}`,
   });
   keteranganDanLokasiRow.getCell("no").font = {
     bold: true,
@@ -197,14 +212,25 @@ const validateMonth = (month) => {
   return parsed;
 };
 
-const parseDate = (dateString) => {
+const parseDate = (dateString, type) => {
   if (!dateString) return null;
 
   // Splits "25/12/2026" into ["25", "12", "2026"]
   const [day, month, year] = dateString.split("/");
 
   // Reconstructs into ISO format "YYYY-MM-DD"
-  return new Date(`${year}-${month}-${day}`);
+  // let date;
+  // if (type === "start") {
+  //   date = moment(`${year}-${month}-${day}`).startOf("day").toDate();
+  // } else if (type === "end") {
+  //   date = moment(`${year}-${month}-${day}`).endOf("day").toDate();
+  // } else {
+  //   date = moment(`${year}-${month}-${day}`).toDate();
+  // }
+
+  const date = moment(`${year}-${month}-${day}`).format("YYYY-MM-DD");
+
+  return date;
 };
 
 const calculatePresence = async ({
@@ -225,6 +251,8 @@ const calculatePresence = async ({
   const start = monthMoment.startOf("month").toDate();
   const end = monthMoment.endOf("month").toDate();
 
+  console.log({ start, end });
+
   const workbook = new ExcelJS.Workbook();
   if (workbookBuffer) {
     await workbook.xlsx.load(workbookBuffer);
@@ -243,10 +271,12 @@ const calculatePresence = async ({
       nip,
       nama,
       jenisIzin,
-      startDate: parseDate(startDate),
-      endDate: parseDate(endDate),
+      startDate: parseDate(startDate, "start"),
+      endDate: parseDate(endDate, "end"),
     };
   });
+
+  // console.log({ izinList });
 
   const hd = new Holidays("ID");
   const holidays = hd
@@ -285,6 +315,7 @@ const calculatePresence = async ({
 
     for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
       const dateNumber = dt.getDate();
+      const dateMoment = moment(dt);
       const isHoliday = holidays.some(
         (h) => new Date(h.date).toDateString() === dt.toDateString(),
       );
@@ -292,17 +323,30 @@ const calculatePresence = async ({
 
       const inCell = targetRow.getCell(`tanggal_${dateNumber}_in`);
       const restCell = targetRow.getCell(`tanggal_${dateNumber}_rest`);
+      const outCell = targetRow.getCell(`tanggal_${dateNumber}_out`);
       const lateCell = targetRow.getCell(`tanggal_${dateNumber}_late`);
 
       const status =
-        inCell.value || restCell.value || lateCell.value ? "HN" : "TK";
+        inCell.value || restCell.value || outCell.value ? "HN" : "TK";
       const lateMinutes = Number(lateCell.value || 0);
 
       if (!isHoliday && !isSunday) {
+        // const findIzinList = izinList.find(
+        //   (izin) =>
+        //     izin.nip === nip && dt >= izin.startDate && dt <= izin.endDate,
+        // );
         const findIzinList = izinList.find(
           (izin) =>
-            izin.nip === nip && dt >= izin.startDate && dt <= izin.endDate,
+            izin.nip === nip &&
+            dateMoment.isBetween(izin.startDate, izin.endDate, null, "[]"),
         );
+
+        // if (nip === "196907041989031005") {
+        //   console.log({
+        //     dateMoment: dateMoment.format("YYYY-MM-DD"),
+        //     findIzinList,
+        //   });
+        // }
 
         if (findIzinList) {
           if (findIzinList.jenisIzin === "CUTI_TAHUNAN") cutiTahunan++;
@@ -318,8 +362,20 @@ const calculatePresence = async ({
             cutiDiLuarTanggunganNegara++;
           else if (findIzinList.jenisIzin === "CUTI_HAJI") cutiHaji++;
         } else {
-          if (status === "HN") hadirNormal++;
-          else tanpaKeterangan++;
+          if (status === "HN") {
+            hadirNormal++;
+          } else {
+            // if (nip === "196907041989031005") {
+            //   console.log({
+            //     dateMoment: dateMoment.format("YYYY-MM-DD"),
+            //     inCell: inCell.value,
+            //     restCell: restCell.value,
+            //     outCell: outCell.value,
+            //     lateCell: lateCell.value,
+            //   });
+            // }
+            tanpaKeterangan++;
+          }
 
           totalTerlambat += lateMinutes;
 
