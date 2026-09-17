@@ -463,7 +463,7 @@ app.post("/api/presence", upload.single("file"), async (req, res) => {
     }
 
     const month =
-      req.body.month || req.query.month || moment().format("YYYY-MM");
+      req.body.period || req.query.period || moment().format("YYYY-MM");
     const { results } = await calculatePresence({
       month,
       workbookBuffer: req.file.buffer,
