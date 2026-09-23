@@ -113,13 +113,15 @@ const buildPresenceWorkbook = (data) => {
   worksheet.columns = [
     { header: "NO", key: "no", width: 10 },
     { header: "NIP", key: "nip", width: 20 },
-    { header: "NAMA", key: "nama", width: 25 },
+    { header: "NAMA", key: "nama", width: 40 },
     { header: "PANGKAT/GOL. RUANG", key: "pangkatGolRu", width: 25 },
     { header: "JABATAN", key: "jabatan", width: 50 },
     { header: "H", key: "hadirNormal", width: 5 },
     { header: "TK", key: "tanpaKeterangan", width: 5 },
     { header: "TL", key: "akumulasiKeterlambatan", width: 5 },
+    { header: "TAM", key: "tidakAbsenMasuk", width: 5 },
     { header: "TAT", key: "tidakAbsenTengah", width: 5 },
+    { header: "TAP", key: "tidakAbsenPulang", width: 5 },
     { header: "DL", key: "dinasLuar", width: 5 },
     { header: "TB", key: "tugasBelajar", width: 5 },
     { header: "CT", key: "cutiTahunan", width: 5 },
@@ -170,6 +172,9 @@ const buildPresenceWorkbook = (data) => {
   });
   worksheet.addRow({ no: "TK", nip: ": Tanpa Keterangan" });
   worksheet.addRow({ no: "TL", nip: ": Konversi Akumulasi Keterlambatan" });
+  worksheet.addRow({ no: "TAM", nip: ": Tidak Absen Masuk" });
+  worksheet.addRow({ no: "TAT", nip: ": Tidak Absen Tengah" });
+  worksheet.addRow({ no: "TAP", nip: ": Tidak Absen Pulang" });
   worksheet.addRow({ no: "DL", nip: ": Dinas Luar" });
   worksheet.addRow({ no: "TB", nip: ": Tugas Belajar" });
   worksheet.addRow({ no: "CT", nip: ": Cuti Tahunan" });
@@ -302,7 +307,9 @@ const calculatePresence = async ({
     let hadirNormal = 0;
     let tanpaKeterangan = 0;
     let totalTerlambat = 0;
+    let tidakAbsenMasuk = 0;
     let tidakAbsenTengah = 0;
+    let tidakAbsenPulang = 0;
     let dinasLuar = 0;
     let tugasBelajar = 0;
     let cutiTahunan = 0;
@@ -364,6 +371,18 @@ const calculatePresence = async ({
         } else {
           if (status === "HN") {
             hadirNormal++;
+
+            if (!restCell.value) {
+              tidakAbsenTengah++;
+            }
+
+            if (!outCell.value) {
+              tidakAbsenPulang++;
+            }
+
+            if (!inCell.value) {
+              tidakAbsenMasuk++;
+            }
           } else {
             // if (nip === "196907041989031005") {
             //   console.log({
@@ -378,10 +397,6 @@ const calculatePresence = async ({
           }
 
           totalTerlambat += lateMinutes;
-
-          if (!restCell.value) {
-            tidakAbsenTengah++;
-          }
         }
       }
     }
@@ -402,6 +417,8 @@ const calculatePresence = async ({
       tanpaKeterangan,
       akumulasiKeterlambatan,
       tidakAbsenTengah,
+      tidakAbsenPulang,
+      tidakAbsenMasuk,
       dinasLuar,
       tugasBelajar,
       cutiTahunan,
